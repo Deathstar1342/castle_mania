@@ -4,10 +4,10 @@
  */
 
 /* include the image we are using */
-#include "background.h"
+#include "castle.h"
 
 /* include the tile map we are using */
-#include "map.h"
+#include "simonSprite.h"
 
 #include "map2.h"
 /* the width and height of the screen */
@@ -113,13 +113,13 @@ void setup_background() {
 
     /* load the palette from the image into palette memory*/
     for (int i = 0; i < PALETTE_SIZE; i++) {
-        bg_palette[i] = background_palette[i];
+        bg_palette[i] = castle_palette[i];
     }
 
     /* load the image into char block 0 (16 bits at a time) */
     volatile unsigned short* dest = char_block(0);
-    unsigned short* image = (unsigned short*) background_data;
-    for (int i = 0; i < ((background_width * background_height) / 2); i++) {
+    unsigned short* image = (unsigned short*) castle_data;
+    for (int i = 0; i < ((castle_width * castle_height) / 2); i++) {
         dest[i] = image[i];
     }
 
@@ -142,8 +142,8 @@ void setup_background() {
 
     /* load the tile data into screen block 16 */
     dest = screen_block(16);
-    for (int i = 0; i < (map_width * map_height); i++) {
-        dest[i] = map[i];
+    for (int i = 0; i < (simonSprite_width * simonSprite_height); i++) {
+        dest[i] = simonSprite[i];
     }
 
     dest = screen_block(24);
