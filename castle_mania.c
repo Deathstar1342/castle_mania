@@ -9,7 +9,6 @@
 /* include the tile map we are using */
 #include "simonSprite.h"
 
-#include "map2.h"
 /* the width and height of the screen */
 #define WIDTH 240
 #define HEIGHT 160
@@ -143,12 +142,7 @@ void setup_background() {
     /* load the tile data into screen block 16 */
     dest = screen_block(16);
     for (int i = 0; i < (simonSprite_width * simonSprite_height); i++) {
-        dest[i] = simonSprite[i];
-    }
-
-    dest = screen_block(24);
-    for (int i = 0; i < (map2_width * map2_height); i++) {
-        dest[i] = map2[i];
+        dest[i] = simonSprite_data[i];
     }
 }
 
