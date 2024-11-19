@@ -1,5 +1,5 @@
 /*
- * tiles.c
+ * castle_mania.c
  * program which demonstraes tile mode 0
  */
 
@@ -159,5 +159,19 @@ void delay(unsigned int amount) {
 }
 
 int main() {
+    *display_control = MODE0 | BG0_ENABLE | BG1_ENABLE;
+    setup_background();
 
+    int xscroll = 0;
+    int yscroll = 0;
+
+    while(1) {
+        wait_vblank();
+        *bg0_x_scroll = xscroll;
+        *bg0_y_scroll = yscroll;
+        *bg1_x_scroll = 2 * xscroll;
+        *bg1_y_scroll = 2 * yscroll;
+
+        delay(50);
+    }
 }
