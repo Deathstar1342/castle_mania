@@ -1,5 +1,5 @@
 /*
- * tiles.c
+ * castle_mania.c
  * program which demonstraes tile mode 0
  */
 
