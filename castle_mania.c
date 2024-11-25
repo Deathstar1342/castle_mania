@@ -167,6 +167,12 @@ int main() {
     int yscroll = 0;
 
     while(1) {
+        if (button_pressed(BUTTON_RIGHT)) {
+            xscroll ++;
+        }
+        if (button_pressed(BUTTON_LEFT)) {
+            xscroll --;
+        }
         wait_vblank();
         *bg0_x_scroll = xscroll;
         *bg0_y_scroll = yscroll;
