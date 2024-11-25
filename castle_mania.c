@@ -4,9 +4,10 @@
  */
 
 /* include the image we are using */
-#include "castle.h"
-
+#include "Castle2_4.h"
 /* include the tile map we are using */
+#include "brick.h"
+#include "tilemap3.h"
 #include "simonSprite.h"
 
 /* the width and height of the screen */
@@ -112,15 +113,19 @@ void setup_background() {
 
     /* load the palette from the image into palette memory*/
     for (int i = 0; i < PALETTE_SIZE; i++) {
-        bg_palette[i] = castle_palette[i];
+        bg_palette[i] = tilemap3_palette[i];
     }
 
     /* load the image into char block 0 (16 bits at a time) */
     volatile unsigned short* dest = char_block(0);
-    unsigned short* image = (unsigned short*) castle_data;
-    for (int i = 0; i < ((castle_width * castle_height) / 2); i++) {
+    /*volatile unsigned short* dest2 = char_block(0);*/
+    unsigned short* image = (unsigned short*) tilemap3_data;
+    for (int i = 0; i < ((tilemap3_width * tilemap3_height) / 2); i++) {
         dest[i] = image[i];
     }
+     /*for (int i = 0; i < ((tilemap2_width * tilemap2_height) / 2); i++){
+        dest2[i] = image[i];
+    }*/
 
     /* set all control the bits in this register */
     *bg0_control = 1 |    /* priority, 0 is highest, 3 is lowest */
@@ -131,19 +136,23 @@ void setup_background() {
         (1 << 13) |       /* wrapping flag */
         (0 << 14);        /* bg size, 0 is 256x256 */
 
-    *bg1_control = 0 |
+   /* *bg1_control = 0 |
         (0 << 2)  |
         (0 << 6)  |
         (1 << 7)  |
-        (24 << 8) |
+        (17 << 8) |
         (1 << 13) |
-        (0 << 14);
+        (0 << 14);*/
 
     /* load the tile data into screen block 16 */
     dest = screen_block(16);
-    for (int i = 0; i < (simonSprite_width * simonSprite_height); i++) {
-        dest[i] = simonSprite_data[i];
+    for (int i = 0; i < (brick_width * brick_height); i++) {
+        dest[i] = brick[i];
     }
+    /*dest2 = screen_block(17);
+    for (int i = 0; i< (map_width * map_height); i++){
+        dest2[i] = map2[i];
+    }*/
 }
 
 
@@ -153,9 +162,8 @@ void delay(unsigned int amount) {
 }
 
 int main() {
-    *display_control = MODE0 | BG0_ENABLE | BG1_ENABLE;
+    *display_control = MODE0 | BG0_ENABLE;
     setup_background();
-
     int xscroll = 0;
     int yscroll = 0;
 
