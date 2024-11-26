@@ -472,7 +472,12 @@ int main() {
     } else {
         chocula_stop(&chocula);
     }
-
+        if (button_pressed(BUTTON_RIGHT)) {
+            xscroll ++;
+        }
+        if (button_pressed(BUTTON_LEFT)) {
+            xscroll --;
+        }
         wait_vblank();
         *bg0_x_scroll = xscroll;
         *bg0_y_scroll = yscroll;
