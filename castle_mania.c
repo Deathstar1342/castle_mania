@@ -8,7 +8,7 @@
 /* include the tile map we are using */
 #include "wall.h"
 #include "simonSprite.h"
-
+/*#include "fein_8k.h"*/
 /* the width and height of the screen */
 #define WIDTH 240
 #define HEIGHT 160
