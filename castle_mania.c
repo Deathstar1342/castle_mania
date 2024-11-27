@@ -367,6 +367,16 @@ void fireball_update(struct Fireball* fireball){
     fireball->x += fireball->vx;
     fireball->y += fireball->vy;
     sprite_position(fireball->sprite, fireball->x, fireball->y);
+    if ((fireball->x) <= 0){
+        fireball->x = 180;
+        fireball->y = 113;
+    }
+}
+void fireball_stop(struct Fireball* fireball){
+    fireball->vx = 0;
+    fireball->vy =0;
+    fireball->x = 210;
+    fireball->y = 113;
 }
 /* update the chocula */
 void chocula_update(struct Chocula* chocula) {
@@ -497,6 +507,8 @@ int main() {
     int chocula_initialize = 0;
     struct Fireball fireball;
     int fireball_initialize = 0;
+    int fireball_counter = 0;
+    int fireball_cooldown = 0;
     while(1) {
         if (xscroll >= 1000 && !chocula_initialize){
             chocula_init(&chocula);
@@ -509,8 +521,22 @@ int main() {
             
         }
         if (fireball_initialize){
-            fireball_update(&fireball);
-            
+            if(fireball_counter < 80){
+                fireball_update(&fireball);
+            }
+            fireball_counter += 1;
+            if (fireball_counter >= 80){
+                (fireball_stop(&fireball));
+                fireball_counter = 0;
+                fireball_initialize = 0;
+                fireball_cooldown = 100;
+            }
+        }
+        else if (fireball_cooldown > 0){
+            fireball_cooldown -= 1;
+            if (fireball_cooldown == 0){
+                fireball_initialize = 1;
+            }
         }
         /* now the arrow keys move the chocula */
     if (button_pressed(BUTTON_RIGHT)) {
