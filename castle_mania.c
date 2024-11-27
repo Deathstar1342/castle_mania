@@ -324,7 +324,60 @@ struct Cookie {
     int border;
 
 };
+/* a struct for the koopa's logic and behavior */
+struct Koopa {
+    /* the actual sprite attribute info */
+    struct Sprite* sprite;
 
+    /* the x and y postion */
+    int x, y;
+
+    /* which frame of the animation he is on */
+    int frame;
+
+    /* the number of frames to wait before flipping */
+    int animation_delay;
+
+    /* the animation counter counts how many frames until we flip */
+    int counter;
+
+    /* whether the koopa is moving right now or not */
+    int move;
+
+    /* the number of pixels away from the edge of the screen the koopa stays */
+    int border;
+
+    /* checks if koopa is attacking or not */
+    int attacking;
+
+    /* koopa's y velocity in 1/256 pixels/second */
+    int yvel;
+
+    /* koopa's y acceleration in 1/256 pixels/second */
+    int gravity;
+
+    /* if koopa is currently falling */
+    int falling;
+
+    /* koopa's remaining lives */
+    int lives;
+};
+
+void koopa_init(struct Koopa* koopa) {
+    koopa->x = 100;
+    koopa->y = 120;
+    koopa->border = 40;
+    koopa->frame = 0;
+    koopa->move = 0;
+    koopa->counter = 0;
+    koopa->animation_delay = 8;
+    koopa->attacking = 0;
+    koopa->yvel = 0;
+    koopa->gravity = 50;
+    koopa->falling = 0;
+    koopa->lives = 3;
+    koopa->sprite = sprite_init(koopa->x, koopa->y, SIZE_32_32, 0, 0, koopa->frame, 0);
+}
 
 void chocula_init(struct Chocula* chocula) {
     chocula->x = 210;
@@ -378,6 +431,146 @@ int chocula_left(struct Chocula* chocula) {
         chocula->x--;
         return 0;
     }
+}
+/*make the koopa jump */
+void koopa_jump(struct Koopa* koopa) {
+    if (!koopa->falling) {
+        koopa->yvel = -1350;
+        koopa->falling = 1;
+    }
+}
+
+/* move the koopa left or right returns if it is at edge of the screen */
+int koopa_left(struct Koopa* koopa) {
+    /* face left */
+    sprite_set_horizontal_flip(koopa->sprite, 1);
+    koopa->move = 1;
+
+    /* if we are at the left end, just scroll the screen */
+    if (koopa->x < koopa->border) {
+        return 1;
+    } else {
+        /* else move left */
+        koopa->x--;
+        return 0;
+    }
+}
+int koopa_right(struct Koopa* koopa) {
+    /* face right */
+    sprite_set_horizontal_flip(koopa->sprite, 0);
+    koopa->move = 1;
+
+    /* if we are at the right end, just scroll the screen */
+    if (koopa->x > (WIDTH - 16 - koopa->border)) {
+        return 1;
+    } else {
+        /* else move right */
+        koopa->x++;
+        return 0;
+    }
+}
+
+void koopa_stop(struct Koopa* koopa) {
+    koopa->move = 0;
+    koopa->frame = 0;
+    koopa->counter = 7;
+    koopa->attacking = 0;
+    sprite_set_offset(koopa->sprite, koopa->frame);
+}
+
+void koopa_attack(struct Koopa* koopa) {
+    sprite_set_offset(koopa->sprite, 64);
+    koopa->attacking = 1;
+}
+
+/* finds which tile a screen coordinate maps to, taking scroll into acco  unt */
+unsigned short tile_lookup(int x, int y, int xscroll, int yscroll,
+        const unsigned short* tilemap, int tilemap_w, int tilemap_h) {
+
+    /* adjust for the scroll */
+    x += xscroll;
+    y += yscroll;
+
+    /* convert from screen coordinates to tile coordinates */
+    x >>= 3;
+    y >>= 3;
+
+    /* account for wraparound */
+    while (x >= tilemap_w) {
+        x -= tilemap_w;
+    }
+    while (y >= tilemap_h) {
+        y -= tilemap_h;
+    }
+    while (x < 0) {
+        x += tilemap_w;
+    }
+    while (y < 0) {
+        y += tilemap_h;
+    }
+
+    /* the larger screen maps (bigger than 32x32) are made of multiple stitched
+       together - the offset is used for finding which screen block we are in
+       for these cases */
+    int offset = 0;
+
+    /* if the width is 64, add 0x400 offset to get to tile maps on right   */
+    if (tilemap_w == 64 && x >= 32) {
+        x -= 32;
+        offset += 0x400;
+    }
+
+    /* if height is 64 and were down there */
+    if (tilemap_h == 64 && y >= 32) {
+        y -= 32;
+
+        /* if width is also 64 add 0x800, else just 0x400 */
+        if (tilemap_w == 64) {
+            offset += 0x800;
+        } else {
+            offset += 0x400;
+        }
+    }
+
+    /* find the index in this tile map */
+    int index = y * 32 + x;
+
+    /* return the tile */
+    return tilemap[index + offset];
+}
+
+/* update the koopa */
+void koopa_update(struct Koopa* koopa, int xscroll) {
+    /* update y position and speed if falling */
+    if (koopa->falling) {
+        koopa->y += (koopa->yvel >> 8);
+        koopa->yvel += koopa->gravity;
+    }
+
+    /* check which tile the simon's feet are over */
+    unsigned short tile = tile_lookup(koopa->x + 8, koopa->y + 32, xscroll, 0, wall, wall_width, wall_height);
+
+    if ((tile == 210)) {
+        /*stop falling */
+        koopa->falling = 0;
+        koopa->yvel = 0;
+        koopa->y &= ~0x3;
+        koopa->y++;
+    }
+
+    if (koopa->move) {
+        koopa->counter++;
+        if (koopa->counter >= koopa->animation_delay) {
+            koopa->frame = koopa->frame + 32;
+            if (koopa->frame > 32) {
+                koopa->frame = 0;
+            }
+            sprite_set_offset(koopa->sprite, koopa->frame);
+            koopa->counter = 0;
+        }
+    }
+
+    sprite_position(koopa->sprite, koopa->x, koopa->y);
 }
 
 int chocula_right(struct Chocula* chocula) {
@@ -433,6 +626,10 @@ void chocula_update(struct Chocula* chocula) {
 
     sprite_position(chocula->sprite, chocula->x, chocula->y);
 }
+
+int gameOver(int playerLives, int bossLives);
+void updateBossLives(int lives);
+
 
 /* the scanline counter is a memory cell which is updated to indicate how
  * much of the screen has been drawn */
@@ -541,66 +738,97 @@ int main() {
     sprite_clear();
     int xscroll = 0;
     int yscroll = 0;
+
+    struct Koopa koopa;
+    koopa_init(&koopa);
+    int flip = 1;
+
     /* create the chocula */
     struct Chocula chocula;
     int chocula_initialize = 0;
+
     struct Cookie cookie;
     int cookie_initialize = 0;
     int cookie_cooldown = 0;
+
     struct Fireball fireball;
     int fireball_initialize = 0;
     int fireball_cooldown = 0;
     int choc_on_screen = 0;
     while(1) {
-        if (xscroll >= 1000 && !chocula_initialize){
-            chocula_init(&chocula);
-            choc_on_screen = 1;
-            chocula_initialize = 1;
-            sprite_set_horizontal_flip(chocula.sprite,1);
-        }
-        if (chocula_initialize && !fireball_initialize){
-            fireball_init(&fireball);
-            fireball_initialize = 1;
-            
-        }
-        if (fireball_initialize && fireball_cooldown <= 0){
-            if(fireball.x > -30){
-                fireball_update(&fireball);
+        koopa_update(&koopa, xscroll);
+        int end = gameOver(1, 1);
+        if (end== 0) {
+            if (xscroll >= 1000 && !chocula_initialize){
+                chocula_init(&chocula);
+                choc_on_screen = 1;
+                chocula_initialize = 1;
+                sprite_set_horizontal_flip(chocula.sprite,1);
             }
-            else if (fireball.x <= -30){
-                fireball_cooldown = 300;
+            if (chocula_initialize && !fireball_initialize){
+                fireball_init(&fireball);
+                fireball_initialize = 1;
+            }
+            if (fireball_initialize && fireball_cooldown <= 0){
+                if(fireball.x > -30){
+                    fireball_update(&fireball);
+                }
+                else if (fireball.x <= -30){
+                    fireball_cooldown = 300;
+                }
+            }
+            if(cookie_cooldown > 0){
+                cookie.x = 180;
+                cookie_cooldown -= 1;
+            }
+            if (fireball_cooldown > 0){
+                fireball.x = 180;
+                fireball_cooldown -= 1;
+                if(!cookie_initialize){
+                    cookie_init(&cookie);
+                    cookie_initialize = 1;
+                }
+                if(cookie.x > -30){
+                    cookie_update(&cookie);
+                }
+                else if(cookie.x <= -30){
+                    cookie_cooldown = 50;
+                }
+            }
+            if (button_pressed(BUTTON_RIGHT)) {
+                if (koopa_right(&koopa)) {
+                    xscroll++;
+                }
+            } else if (button_pressed(BUTTON_LEFT)) {
+                if (koopa_left(&koopa)) {
+                    xscroll--;
+                }
+            } else if (button_pressed(BUTTON_B)) {
+                koopa_attack(&koopa);
+            } else {
+                koopa_stop(&koopa);
+            }
+
+            if (button_pressed(BUTTON_A)) {
+                koopa_jump(&koopa);
             }
         }
-        if(cookie_cooldown > 0){
-            cookie.x = 180;
-            cookie_cooldown -= 1;
+             /* we died */
+        else if (end == 1) {
+
         }
-        if (fireball_cooldown > 0){
-            fireball.x = 180;
-            fireball_cooldown -= 1;
-            if(!cookie_initialize){
-                cookie_init(&cookie);
-                cookie_initialize = 1;
-            }
-            if(cookie.x > -30){
-                cookie_update(&cookie);
-            }
-            else if(cookie.x <= -30){
-                cookie_cooldown = 50;
-            }
-        }
-        if (button_pressed(BUTTON_RIGHT)) {
-            xscroll ++;
-        }
-        if (button_pressed(BUTTON_LEFT)) {
-            xscroll --;
+
+        /* we won */
+        else {
+            flip = flip^1;
+            sprite_set_horizontal_flip(koopa.sprite, flip);
         }
         wait_vblank();
         if (choc_on_screen == 0){
-        *bg0_x_scroll = xscroll;
-        *bg0_y_scroll = yscroll;
-        *bg1_x_scroll = 2 * xscroll;
-        *bg1_y_scroll = 2 * yscroll;
+            *bg0_x_scroll = xscroll;
+            *bg0_y_scroll = yscroll;
+            *bg1_x_scroll = 2 * xscroll;
+            *bg1_y_scroll = 2 * yscroll;
         }
         sprite_update_all();
 
