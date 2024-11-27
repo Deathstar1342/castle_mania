@@ -281,6 +281,9 @@ struct Chocula {
 
     /* the number of pixels away from the edge of the screen the chocula stays */
     int border;
+
+    /* number of lives*/
+    int lives;
 };
 
 struct Fireball {
@@ -388,6 +391,7 @@ void chocula_init(struct Chocula* chocula) {
     chocula->counter = 0;
     chocula->animation_delay = 8;
     chocula->sprite = sprite_init(chocula->x, chocula->y, SIZE_32_64, 0, 0, chocula->frame, 0);
+    chocula->lives = 10;
     sprite_set_offset(chocula->sprite,96);
 }
 
@@ -479,9 +483,13 @@ void koopa_stop(struct Koopa* koopa) {
     sprite_set_offset(koopa->sprite, koopa->frame);
 }
 
-void koopa_attack(struct Koopa* koopa) {
+void koopa_attack(struct Koopa* koopa, struct Chocula* chocula, int init) {
     sprite_set_offset(koopa->sprite, 64);
-    koopa->attacking = 1;
+    if(init == 1){
+        if(chocula->x <= koopa->x +15){
+            chocula->lives --;
+        }
+    }
 }
 
 /* finds which tile a screen coordinate maps to, taking scroll into acco  unt */
@@ -535,17 +543,23 @@ unsigned short tile_lookup(int x, int y, int xscroll, int yscroll,
 
     /* find the index in this tile map */
     int index = y * 32 + x;
-
     /* return the tile */
     return tilemap[index + offset];
 }
 
 /* update the koopa */
-void koopa_update(struct Koopa* koopa, int xscroll) {
+void koopa_update(struct Koopa* koopa,struct Cookie* cookie, struct Fireball* fireball, int xscroll) {
     /* update y position and speed if falling */
     if (koopa->falling) {
         koopa->y += (koopa->yvel >> 8);
         koopa->yvel += koopa->gravity;
+    }
+
+    if ((fireball->x < koopa ->x) && (fireball->x + 25 > koopa->x) && (fireball->y > koopa->y) && (fireball->y < koopa->y + 32)){
+        koopa->lives--;
+    }
+    if ((fireball->x < koopa ->x) && (fireball->x + 40 > koopa->x) && (fireball->y > koopa->y) && (fireball->y < koopa->y + 32)){
+        koopa->lives--;
     }
 
     /* check which tile the simon's feet are over */
@@ -756,9 +770,12 @@ int main() {
     int fireball_initialize = 0;
     int fireball_cooldown = 0;
     int choc_on_screen = 0;
+    int end = 0;
     while(1) {
-        koopa_update(&koopa, xscroll);
-        int end = gameOver(1, 1);
+        koopa_update(&koopa,&cookie,&fireball, xscroll);
+        if(chocula_initialize){
+            int end = gameOver(koopa.lives,chocula.lives);
+        }
         if (end== 0) {
             if (xscroll >= 1000 && !chocula_initialize){
                 chocula_init(&chocula);
@@ -805,7 +822,7 @@ int main() {
                     xscroll--;
                 }
             } else if (button_pressed(BUTTON_B)) {
-                koopa_attack(&koopa);
+                koopa_attack(&koopa,&chocula,chocula_initialize);
             } else {
                 koopa_stop(&koopa);
             }
@@ -816,7 +833,7 @@ int main() {
         }
              /* we died */
         else if (end == 1) {
-
+        
         }
 
         /* we won */
@@ -832,7 +849,6 @@ int main() {
             *bg1_y_scroll = 2 * yscroll;
         }
         sprite_update_all();
-
         delay(50);
     }
 }
