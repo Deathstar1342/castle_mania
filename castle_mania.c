@@ -304,9 +304,31 @@ struct Fireball {
 
 };
 
+struct Cookie {
+    struct Sprite* sprite;
+    int x, y;
+    int vx, vy;
+     /* which frame of the animation he is on */
+    int frame;
+
+    /* the number of frames to wait before flipping */
+    int animation_delay;
+
+    /* the animation counter counts how many frames until we flip */
+    int counter;
+
+    /* whether the chocula is moving right now or not */
+    int move;
+
+    /* the number of pixels away from the edge of the screen the chocula stays */
+    int border;
+
+};
+
+
 void chocula_init(struct Chocula* chocula) {
     chocula->x = 210;
-    chocula->y = 113;
+    chocula->y = 90;
     chocula->border = 40;
     chocula->frame = 0;
     chocula->move = 0;
@@ -318,11 +340,20 @@ void chocula_init(struct Chocula* chocula) {
 
 void fireball_init(struct Fireball* fireball){
     fireball->x = 180;
-    fireball->y = 113;
+    fireball->y = 90;
     fireball->vx = -2;
     fireball->vy = 0;
     fireball->sprite = sprite_init(fireball->x, fireball->y, SIZE_32_32, 0, 0, 0, 0);
     sprite_set_offset(fireball->sprite, 64);
+}
+
+void cookie_init(struct Cookie* cookie){
+    cookie->x = 180;
+    cookie->y = 90;
+    cookie->vx = -2;
+    cookie->vy = 0;
+    cookie->sprite = sprite_init(cookie->x, cookie->y, SIZE_32_32, 0, 0, 0, 0);
+    sprite_set_offset(cookie->sprite, 64);
 }
 
 
@@ -367,10 +398,6 @@ void fireball_update(struct Fireball* fireball){
     fireball->x += fireball->vx;
     fireball->y += fireball->vy;
     sprite_position(fireball->sprite, fireball->x, fireball->y);
-    if ((fireball->x) <= 0){
-        fireball->x = 180;
-        fireball->y = 113;
-    }
 }
 void fireball_stop(struct Fireball* fireball){
     fireball->vx = 0;
@@ -507,7 +534,6 @@ int main() {
     int chocula_initialize = 0;
     struct Fireball fireball;
     int fireball_initialize = 0;
-    int fireball_counter = 0;
     int fireball_cooldown = 0;
     while(1) {
         if (xscroll >= 1000 && !chocula_initialize){
@@ -520,33 +546,19 @@ int main() {
             fireball_initialize = 1;
             
         }
-        if (fireball_initialize){
-            if(fireball_counter < 80){
+        if (fireball_initialize && fireball_cooldown <= 0){
+            if(fireball.x > -30){
                 fireball_update(&fireball);
             }
-            fireball_counter += 1;
-            if (fireball_counter >= 80){
-                (fireball_stop(&fireball));
-                fireball_counter = 0;
-                fireball_initialize = 0;
-                fireball_cooldown = 100;
+            else if (fireball.x <= -30){
+                fireball_cooldown = 300;
             }
         }
-        else if (fireball_cooldown > 0){
+        if (fireball_cooldown > 0){
+            fireball.x = 180;
             fireball_cooldown -= 1;
-            if (fireball_cooldown == 0){
-                fireball_initialize = 1;
-            }
         }
         /* now the arrow keys move the chocula */
-    if (button_pressed(BUTTON_RIGHT)) {
-            xscroll++;
-        }
-    else if (button_pressed(BUTTON_LEFT)) {
-            xscroll--;
-        }
-    else {
-    }
         if (button_pressed(BUTTON_RIGHT)) {
             xscroll ++;
         }
