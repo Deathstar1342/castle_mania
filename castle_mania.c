@@ -7,7 +7,7 @@
 #include "castle.h"
 /* include the tile map we are using */
 #include "wall.h"
-#include "chocula.h"
+#include "mania_sprites.h"
 
 /* the width and height of the screen */
 #define WIDTH 240
@@ -137,10 +137,10 @@ volatile unsigned short* sprite_image_memory = (volatile unsigned short*) 0x6010
 /* setup the sprite image and palette */
 void setup_sprite_image() {
     /* load the palette from the image into palette memory*/
-    memcpy16_dma((unsigned short*) sprite_palette, (unsigned short*) chocula_palette, PALETTE_SIZE);
+    memcpy16_dma((unsigned short*) sprite_palette, (unsigned short*) mania_sprites_palette, PALETTE_SIZE);
 
     /* load the image into sprite image memory */
-    memcpy16_dma((unsigned short*) sprite_image_memory, (unsigned short*) chocula_data, (chocula_width * chocula_height) / 2);
+    memcpy16_dma((unsigned short*) sprite_image_memory, (unsigned short*) mania_sprites_data, (mania_sprites_width * mania_sprites_height) / 2);
 
 }
 
@@ -388,6 +388,7 @@ void chocula_init(struct Chocula* chocula) {
     chocula->counter = 0;
     chocula->animation_delay = 8;
     chocula->sprite = sprite_init(chocula->x, chocula->y, SIZE_32_64, 0, 0, chocula->frame, 0);
+    sprite_set_offset(chocula->sprite,96);
 }
 
 
@@ -397,7 +398,7 @@ void fireball_init(struct Fireball* fireball){
     fireball->vx = -1;
     fireball->vy = 0;
     fireball->sprite = sprite_init(fireball->x, fireball->y, SIZE_32_32, 0, 0, 0, 0);
-    sprite_set_offset(fireball->sprite, 64);
+    sprite_set_offset(fireball->sprite, 160);
 }
 
 int random(int num){
@@ -413,7 +414,7 @@ void cookie_init(struct Cookie* cookie){
     cookie->vx = -1;
     cookie->vy = 1;
     cookie->sprite = sprite_init(cookie->x, cookie->y, SIZE_32_32, 0, 0, 0, 0);
-    sprite_set_offset(cookie->sprite, 96);
+    sprite_set_offset(cookie->sprite, 192);
 }
 
 
