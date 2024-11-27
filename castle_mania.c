@@ -479,11 +479,15 @@ void koopa_stop(struct Koopa* koopa) {
     sprite_set_offset(koopa->sprite, koopa->frame);
 }
 
-void koopa_attack(struct Koopa* koopa) {
+void koopa_attack(struct Koopa* koopa, struct Chocula* chocula, int init) {
     sprite_set_offset(koopa->sprite, 64);
-    koopa->attacking = 1;
-}
+    if(init ==1){
+    if(chocula->x <= koopa->x + 15){
+        chocula->lives--;
+    }
+    } 
 
+}
 /* finds which tile a screen coordinate maps to, taking scroll into acco  unt */
 unsigned short tile_lookup(int x, int y, int xscroll, int yscroll,
         const unsigned short* tilemap, int tilemap_w, int tilemap_h) {
@@ -538,16 +542,25 @@ unsigned short tile_lookup(int x, int y, int xscroll, int yscroll,
 
     /* return the tile */
     return tilemap[index + offset];
+
 }
 
 /* update the koopa */
-void koopa_update(struct Koopa* koopa, int xscroll) {
+void koopa_update(struct Koopa* koopa, struct Cookie* cookie, struct Fireball* fireball int xscroll) {
     /* update y position and speed if falling */
     if (koopa->falling) {
         koopa->y += (koopa->yvel >> 8);
         koopa->yvel += koopa->gravity;
     }
 
+    if((fireball->x < koopa->x) && (fireball->x+30 > koopa->x) && (fireball->y > koopa->y) && (fireball->y < koopa->y +32)){
+        koopa->lives --;
+    }
+    
+    if((cookie->x < koopa->x) && (cookie->x+40 > koopa->x) && (cookie->y > koopa->y) && (cookie->y < koopa->y +32)){
+        koopa->lives --;
+    }
+    
     /* check which tile the simon's feet are over */
     unsigned short tile = tile_lookup(koopa->x + 8, koopa->y + 32, xscroll, 0, wall, wall_width, wall_height);
 
@@ -756,9 +769,12 @@ int main() {
     int fireball_initialize = 0;
     int fireball_cooldown = 0;
     int choc_on_screen = 0;
+    int end =0;
     while(1) {
-        koopa_update(&koopa, xscroll);
-        int end = gameOver(1, 1);
+        koopa_update(&koopa, &cookie, &fireball, xscroll);
+        if(chocula_initialize ==1){
+            end = gameOver(koopa.lives, chocula.lives);
+        }
         if (end== 0) {
             if (xscroll >= 1000 && !chocula_initialize){
                 chocula_init(&chocula);
@@ -805,7 +821,7 @@ int main() {
                     xscroll--;
                 }
             } else if (button_pressed(BUTTON_B)) {
-                koopa_attack(&koopa);
+                koopa_attack(&koopa, &chocula, chocula_initialize);
             } else {
                 koopa_stop(&koopa);
             }
