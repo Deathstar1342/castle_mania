@@ -8,7 +8,6 @@
 /* include the tile map we are using */
 #include "wall.h"
 #include "chocula.h"
-#include "fireball.h"
 
 /* the width and height of the screen */
 #define WIDTH 240
