@@ -340,20 +340,27 @@ void chocula_init(struct Chocula* chocula) {
 
 void fireball_init(struct Fireball* fireball){
     fireball->x = 180;
-    fireball->y = 90;
-    fireball->vx = -2;
+    fireball->y = 95;
+    fireball->vx = -1;
     fireball->vy = 0;
     fireball->sprite = sprite_init(fireball->x, fireball->y, SIZE_32_32, 0, 0, 0, 0);
     sprite_set_offset(fireball->sprite, 64);
 }
 
+int random(int num){
+    if(num > 9){
+        num = num-9;
+    }
+    return (num+3);
+}
+
 void cookie_init(struct Cookie* cookie){
     cookie->x = 180;
     cookie->y = 90;
-    cookie->vx = -2;
-    cookie->vy = 0;
+    cookie->vx = -1;
+    cookie->vy = 1;
     cookie->sprite = sprite_init(cookie->x, cookie->y, SIZE_32_32, 0, 0, 0, 0);
-    sprite_set_offset(cookie->sprite, 64);
+    sprite_set_offset(cookie->sprite, 96);
 }
 
 
@@ -399,11 +406,16 @@ void fireball_update(struct Fireball* fireball){
     fireball->y += fireball->vy;
     sprite_position(fireball->sprite, fireball->x, fireball->y);
 }
-void fireball_stop(struct Fireball* fireball){
-    fireball->vx = 0;
-    fireball->vy =0;
-    fireball->x = 210;
-    fireball->y = 113;
+void cookie_update(struct Cookie* cookie){
+    cookie->x += cookie->vx;
+    cookie->y += cookie->vy;
+    if (cookie->y <= 10){
+        cookie->vy = -1*(cookie->vy);
+    }
+    else if(cookie->y >= 120){
+        cookie ->vy = -1*(cookie->vy);
+    }
+    sprite_position(cookie->sprite, cookie->x, cookie->y);
 }
 /* update the chocula */
 void chocula_update(struct Chocula* chocula) {
@@ -532,6 +544,9 @@ int main() {
     /* create the chocula */
     struct Chocula chocula;
     int chocula_initialize = 0;
+    struct Cookie cookie;
+    int cookie_initialize = 0;
+    int cookie_cooldown = 0;
     struct Fireball fireball;
     int fireball_initialize = 0;
     int fireball_cooldown = 0;
@@ -556,9 +571,23 @@ int main() {
                 fireball_cooldown = 300;
             }
         }
+        if(cookie_cooldown > 0){
+            cookie.x = 180;
+            cookie_cooldown -= 1;
+        }
         if (fireball_cooldown > 0){
             fireball.x = 180;
             fireball_cooldown -= 1;
+            if(!cookie_initialize){
+                cookie_init(&cookie);
+                cookie_initialize = 1;
+            }
+            if(cookie.x > -30){
+                cookie_update(&cookie);
+            }
+            else if(cookie.x <= -30){
+                cookie_cooldown = 50;
+            }
         }
         if (button_pressed(BUTTON_RIGHT)) {
             xscroll ++;
