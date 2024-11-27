@@ -643,7 +643,7 @@ void chocula_update(struct Chocula* chocula) {
 }
 
 int gameOver(int playerLives, int bossLives);
-void updateBossLives(int lives);
+int checkScroll(int x);
 
 
 /* the scanline counter is a memory cell which is updated to indicate how
@@ -774,10 +774,10 @@ int main() {
     while(1) {
         koopa_update(&koopa,&cookie,&fireball, xscroll);
         if(chocula_initialize){
-            int end = gameOver(koopa.lives,chocula.lives);
+            end = gameOver(koopa.lives,chocula.lives);
         }
         if (end== 0) {
-            if (xscroll >= 1000 && !chocula_initialize){
+            if (checkScroll(xscroll) && !chocula_initialize){
                 chocula_init(&chocula);
                 choc_on_screen = 1;
                 chocula_initialize = 1;
@@ -833,7 +833,8 @@ int main() {
         }
              /* we died */
         else if (end == 1) {
-        
+            flip = flip^1;
+             sprite_set_horizontal_flip(chocula.sprite, flip);
         }
 
         /* we won */
