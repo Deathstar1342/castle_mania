@@ -378,7 +378,7 @@ void koopa_init(struct Koopa* koopa) {
     koopa->yvel = 0;
     koopa->gravity = 50;
     koopa->falling = 0;
-    koopa->lives = 3;
+    koopa->lives = 30;
     koopa->sprite = sprite_init(koopa->x, koopa->y, SIZE_32_32, 0, 0, koopa->frame, 0);
 }
 
@@ -391,7 +391,7 @@ void chocula_init(struct Chocula* chocula) {
     chocula->counter = 0;
     chocula->animation_delay = 8;
     chocula->sprite = sprite_init(chocula->x, chocula->y, SIZE_32_64, 0, 0, chocula->frame, 0);
-    chocula->lives = 10;
+    chocula->lives = 500;
     sprite_set_offset(chocula->sprite,96);
 }
 
@@ -486,12 +486,10 @@ void koopa_stop(struct Koopa* koopa) {
 void koopa_attack(struct Koopa* koopa, struct Chocula* chocula, int init) {
     sprite_set_offset(koopa->sprite, 64);
     if(init == 1){
-        if(chocula->x <= koopa->x +15){
+        if(koopa->x >= 180){
             chocula->lives --;
         }
     }
-}
-
 }
 /* finds which tile a screen coordinate maps to, taking scroll into acco  unt */
 unsigned short tile_lookup(int x, int y, int xscroll, int yscroll,
@@ -837,12 +835,16 @@ int main() {
         else if (end == 1) {
             flip = flip^1;
              sprite_set_horizontal_flip(chocula.sprite, flip);
+             sprite_set_offset(koopa.sprite,224);
+             koopa.y = 130;
         }
 
         /* we won */
         else {
             flip = flip^1;
             sprite_set_horizontal_flip(koopa.sprite, flip);
+            sprite_set_offset(chocula.sprite,256);
+            chocula.y = 130;
         }
         wait_vblank();
         if (choc_on_screen == 0){
