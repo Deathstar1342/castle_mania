@@ -509,9 +509,11 @@ int main() {
     int fireball_initialize = 0;
     int fireball_counter = 0;
     int fireball_cooldown = 0;
+    int choc_on_screen = 0;
     while(1) {
         if (xscroll >= 1000 && !chocula_initialize){
             chocula_init(&chocula);
+            choc_on_screen = 1;
             chocula_initialize = 1;
             sprite_set_horizontal_flip(chocula.sprite,1);
         }
@@ -538,15 +540,6 @@ int main() {
                 fireball_initialize = 1;
             }
         }
-        /* now the arrow keys move the chocula */
-    if (button_pressed(BUTTON_RIGHT)) {
-            xscroll++;
-        }
-    else if (button_pressed(BUTTON_LEFT)) {
-            xscroll--;
-        }
-    else {
-    }
         if (button_pressed(BUTTON_RIGHT)) {
             xscroll ++;
         }
@@ -554,11 +547,12 @@ int main() {
             xscroll --;
         }
         wait_vblank();
+        if (choc_on_screen == 0){
         *bg0_x_scroll = xscroll;
         *bg0_y_scroll = yscroll;
         *bg1_x_scroll = 2 * xscroll;
         *bg1_y_scroll = 2 * yscroll;
-
+        }
         sprite_update_all();
 
         delay(50);
