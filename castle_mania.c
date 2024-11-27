@@ -8,6 +8,7 @@
 /* include the tile map we are using */
 #include "wall.h"
 #include "chocula.h"
+#include "fireball.h"
 
 /* the width and height of the screen */
 #define WIDTH 240
@@ -141,6 +142,7 @@ void setup_sprite_image() {
 
     /* load the image into sprite image memory */
     memcpy16_dma((unsigned short*) sprite_image_memory, (unsigned short*) chocula_data, (chocula_width * chocula_height) / 2);
+
 }
 
 /* function to initialize a sprite with its properties, and return a pointer */
@@ -281,16 +283,49 @@ struct Chocula {
     /* the number of pixels away from the edge of the screen the chocula stays */
     int border;
 };
+
+struct Fireball {
+    struct Sprite* sprite;
+    int x, y;
+    int vx, vy;
+     /* which frame of the animation he is on */
+    int frame;
+
+    /* the number of frames to wait before flipping */
+    int animation_delay;
+
+    /* the animation counter counts how many frames until we flip */
+    int counter;
+
+    /* whether the chocula is moving right now or not */
+    int move;
+
+    /* the number of pixels away from the edge of the screen the chocula stays */
+    int border;
+
+};
+
 void chocula_init(struct Chocula* chocula) {
-    chocula->x = 100;
+    chocula->x = 210;
     chocula->y = 113;
     chocula->border = 40;
     chocula->frame = 0;
     chocula->move = 0;
     chocula->counter = 0;
     chocula->animation_delay = 8;
-    chocula->sprite = sprite_init(chocula->x, chocula->y, SIZE_16_32, 0, 0, chocula->frame, 0);
+    chocula->sprite = sprite_init(chocula->x, chocula->y, SIZE_32_64, 0, 0, chocula->frame, 0);
 }
+
+
+void fireball_init(struct Fireball* fireball){
+    fireball->x = 180;
+    fireball->y = 113;
+    fireball->vx = -2;
+    fireball->vy = 0;
+    fireball->sprite = sprite_init(fireball->x, fireball->y, SIZE_32_32, 0, 0, 0, 0);
+    sprite_set_offset(fireball->sprite, 64);
+}
+
 
 /* move the chocula left or right returns if it is at edge of the screen */
 int chocula_left(struct Chocula* chocula) {
@@ -329,7 +364,11 @@ void chocula_stop(struct Chocula* chocula) {
     chocula->counter = 7;
     sprite_set_offset(chocula->sprite, chocula->frame);
 }
-
+void fireball_update(struct Fireball* fireball){
+    fireball->x += fireball->vx;
+    fireball->y += fireball->vy;
+    sprite_position(fireball->sprite, fireball->x, fireball->y);
+}
 /* update the chocula */
 void chocula_update(struct Chocula* chocula) {
     if (chocula->move) {
@@ -456,21 +495,32 @@ int main() {
     int yscroll = 0;
     /* create the chocula */
     struct Chocula chocula;
-    chocula_init(&chocula);
-
+    int chocula_initialize = 0;
+    struct Fireball fireball;
+    int fireball_initialize = 0;
     while(1) {
-        chocula_update(&chocula);
+        if (xscroll >= 1000 && !chocula_initialize){
+            chocula_init(&chocula);
+            chocula_initialize = 1;
+            sprite_set_horizontal_flip(chocula.sprite,1);
+        }
+        if (chocula_initialize && !fireball_initialize){
+            fireball_init(&fireball);
+            fireball_initialize = 1;
+            
+        }
+        if (fireball_initialize){
+            fireball_update(&fireball);
+            
+        }
         /* now the arrow keys move the chocula */
     if (button_pressed(BUTTON_RIGHT)) {
-        if (chocula_right(&chocula)) {
             xscroll++;
         }
-    } else if (button_pressed(BUTTON_LEFT)) {
-        if (chocula_left(&chocula)) {
+    else if (button_pressed(BUTTON_LEFT)) {
             xscroll--;
         }
-    } else {
-        chocula_stop(&chocula);
+    else {
     }
         if (button_pressed(BUTTON_RIGHT)) {
             xscroll ++;
